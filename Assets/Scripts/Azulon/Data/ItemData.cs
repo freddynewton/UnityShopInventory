@@ -61,12 +61,4 @@ namespace Azulon.Data
 			return !string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(itemName) && price >= 0;
 		}
 	}
-
-	public enum ItemType
-	{
-		Consumable,
-		Equipment,
-		Material,
-		Valuable
-	}
 }

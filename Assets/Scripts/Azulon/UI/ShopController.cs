@@ -5,6 +5,7 @@ using TMPro;
 using Zenject;
 using Azulon.Data;
 using Azulon.Services;
+using System;
 
 namespace Azulon.UI
 {
@@ -12,17 +13,81 @@ namespace Azulon.UI
 	{
 		[Header("UI References")]
 		[SerializeField] private GameObject shopPanel;
+		[SerializeField] private ScrollRect shopScrollRect;
 		[SerializeField] private Transform shopItemsContainer;
 		[SerializeField] private GameObject shopItemPrefab;
 		[SerializeField] private TextMeshProUGUI currencyText;
 		[SerializeField] private Button closeShopButton;
 
-		[Header("Shop Configuration")]
-		[SerializeField] private List<ItemDataSO> availableShopItems = new List<ItemDataSO>();
+		[Header("Shop Preview")]
+		[SerializeField] private GameObject shopItemPreview;
+		[SerializeField] private Image previewItemIcon;
+		[SerializeField] private TextMeshProUGUI previewItemName;
+		[SerializeField] private TextMeshProUGUI previewItemPrice;
+		[SerializeField] private ScrollRect previewDescriptionScrollRect;
+		[SerializeField] private TextMeshProUGUI previewItemDescription;
+		[SerializeField] private Button previewPurchaseButton;
+		[SerializeField] private TextMeshProUGUI previewPurchaseButtonText;
+
+		private ItemDataSO _selectedItemSO;
+		private List<ItemDataSO> _loadedShopItems = new List<ItemDataSO>();
 
 		[Inject] private IItemService _itemService;
 
 		private readonly List<ShopItemUI> _shopItemUIs = new List<ShopItemUI>();
+
+		public void OnItemSelected(ItemDataSO itemSO)
+		{
+			_selectedItemSO = itemSO;
+
+			// Update selection state of all shop item UIs
+			foreach (var itemUI in _shopItemUIs)
+			{
+				itemUI.SetSelected(itemUI.ItemDataSO == itemSO);
+			}
+
+			UpdatePreview();
+		}
+
+		public void OpenShop()
+		{
+			if (shopPanel != null)
+			{
+				shopPanel.SetActive(true);
+			}
+
+			UpdateCurrencyDisplay();
+
+			// Update all shop item UIs
+			foreach (var itemUI in _shopItemUIs)
+			{
+				itemUI.UpdateAffordability();
+			}
+		}
+
+		public void CloseShop()
+		{
+			if (shopPanel != null)
+			{
+				shopPanel.SetActive(false);
+			}
+		}
+
+		public void ToggleShop()
+		{
+			if (shopPanel != null)
+			{
+				bool isActive = shopPanel.activeSelf;
+				if (isActive)
+				{
+					CloseShop();
+				}
+				else
+				{
+					OpenShop();
+				}
+			}
+		}
 
 		private void Start()
 		{
@@ -38,8 +103,43 @@ namespace Azulon.UI
 
 		private void InitializeShop()
 		{
-			_itemService.SetupShop(availableShopItems);
+			LoadShopItemsFromResources();
+			_itemService.SetupShop(_loadedShopItems);
 			CreateShopItemUIs();
+			SetupPreview();
+		}
+
+		private void LoadShopItemsFromResources()
+		{
+			_loadedShopItems.Clear();
+
+			// Load all ItemDataSO from Resources folder
+			ItemDataSO[] itemDataSOs = Resources.LoadAll<ItemDataSO>("");
+
+			foreach (var itemSO in itemDataSOs)
+			{
+				if (itemSO != null && itemSO.ItemData != null && itemSO.ItemData.IsValid())
+				{
+					_loadedShopItems.Add(itemSO);
+				}
+			}
+			Debug.Log($"ShopController: Loaded {_loadedShopItems.Count} items from Resources");
+		}
+
+		private void SetupPreview()
+		{
+			if (shopItemPreview != null)
+			{
+				shopItemPreview.SetActive(false);
+			}
+
+			if (previewPurchaseButton != null)
+			{
+				previewPurchaseButton.onClick.RemoveAllListeners();
+				previewPurchaseButton.onClick.AddListener(OnPreviewPurchaseClicked);
+			}
+
+			LayoutRebuilder.ForceRebuildLayoutImmediate(shopScrollRect.content);
 		}
 
 		private void SetupEventListeners()
@@ -48,7 +148,9 @@ namespace Azulon.UI
 			_itemService.OnItemPurchased += OnItemPurchased;
 
 			if (closeShopButton != null)
+			{
 				closeShopButton.onClick.AddListener(CloseShop);
+			}
 		}
 
 		private void RemoveEventListeners()
@@ -60,7 +162,9 @@ namespace Azulon.UI
 			}
 
 			if (closeShopButton != null)
+			{
 				closeShopButton.onClick.RemoveListener(CloseShop);
+			}
 		}
 
 		private void CreateShopItemUIs()
@@ -79,27 +183,51 @@ namespace Azulon.UI
 			{
 				CreateShopItemUI(itemSO);
 			}
+			
+			// After creating all items, ensure proper content sizing for scrolling
+			EnsureScrollableContent();
+		}
+
+		private void EnsureScrollableContent()
+		{
+			if (shopScrollRect != null && shopScrollRect.content != null)
+			{
+				LayoutRebuilder.ForceRebuildLayoutImmediate(shopScrollRect.content);
+				shopScrollRect.verticalNormalizedPosition = 1f; // Reset scroll position to top
+			}
+			else
+			{
+				Debug.LogWarning("ShopController: shopScrollRect or its content is not set up correctly!");
+			}
 		}
 
 		private void CreateShopItemUI(ItemDataSO itemSO)
 		{
 			if (shopItemPrefab == null || shopItemsContainer == null || itemSO == null)
+			{
 				return;
+			}
 
 			GameObject itemUIObj = Instantiate(shopItemPrefab, shopItemsContainer);
 			ShopItemUI itemUI = itemUIObj.GetComponent<ShopItemUI>();
 
-			if (itemUI != null)
+			if (itemUI == null)
 			{
-				itemUI.Initialize(itemSO, _itemService);
-				_shopItemUIs.Add(itemUI);
+				Debug.LogError("ShopController: ShopItemUI component not found on prefab!");
+				return;
 			}
+
+			itemUI.Initialize(itemSO, _itemService, this);
+			_shopItemUIs.Add(itemUI);
+
 		}
 
 		private void UpdateCurrencyDisplay(int newCurrency)
 		{
 			if (currencyText != null)
+			{
 				currencyText.text = $"Gold: {newCurrency}";
+			}
 		}
 
 		private void UpdateCurrencyDisplay()
@@ -116,37 +244,85 @@ namespace Azulon.UI
 			{
 				itemUI.UpdateAffordability();
 			}
-		}
 
-		public void OpenShop()
-		{
-			if (shopPanel != null)
-				shopPanel.SetActive(true);
-
-			UpdateCurrencyDisplay();
-
-			// Update all shop item UIs
-			foreach (var itemUI in _shopItemUIs)
+			// Update preview if the purchased item is currently selected
+			if (_selectedItemSO != null)
 			{
-				itemUI.UpdateAffordability();
+				UpdatePreviewAffordability();
 			}
 		}
 
-		public void CloseShop()
+		private void UpdatePreview()
 		{
-			if (shopPanel != null)
-				shopPanel.SetActive(false);
+			if (_selectedItemSO == null || _selectedItemSO.ItemData == null)
+			{
+				if (shopItemPreview != null)
+					shopItemPreview.SetActive(false);
+				return;
+			}
+
+			if (shopItemPreview != null)
+			{
+				shopItemPreview.SetActive(true);
+			}
+
+			var itemData = _selectedItemSO.ItemData;
+
+			// Update preview UI elements
+			if (previewItemIcon != null)
+			{
+				previewItemIcon.sprite = itemData.Icon;
+				previewItemIcon.gameObject.SetActive(itemData.Icon != null);
+			}
+
+			if (previewItemName != null)
+				previewItemName.text = itemData.Name;
+
+			if (previewItemPrice != null)
+				previewItemPrice.text = $"{itemData.Price} Gold";
+
+			if (previewItemDescription != null)
+			{
+				previewItemDescription.text = itemData.Description;
+
+				// Don't reset scroll position - keep user's current scroll position
+				// This allows users to maintain their reading position when switching items
+			}
+
+			UpdatePreviewAffordability();
 		}
 
-		public void ToggleShop()
+		private void UpdatePreviewAffordability()
 		{
-			if (shopPanel != null)
+			if (_selectedItemSO == null || previewPurchaseButton == null)
+				return;
+
+			bool canAfford = _itemService.CanPurchaseItem(_selectedItemSO);
+			previewPurchaseButton.interactable = canAfford;
+
+			if (previewPurchaseButtonText != null)
 			{
-				bool isActive = shopPanel.activeSelf;
-				if (isActive)
-					CloseShop();
-				else
-					OpenShop();
+				previewPurchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
+				previewPurchaseButtonText.color = canAfford ? Color.white : Color.red;
+			}
+		}
+
+		private void OnPreviewPurchaseClicked()
+		{
+			if (_selectedItemSO == null || _itemService == null)
+			{
+				return;
+			}
+
+			bool success = _itemService.PurchaseItem(_selectedItemSO, 1);
+
+			if (success)
+			{
+				Debug.Log($"Successfully purchased from preview: {_selectedItemSO.ItemData.Name}");
+			}
+			else
+			{
+				Debug.Log($"Failed to purchase from preview: {_selectedItemSO.ItemData.Name}");
 			}
 		}
 
@@ -156,7 +332,8 @@ namespace Azulon.UI
 		{
 			if (Application.isPlaying && _itemService != null)
 			{
-				_itemService.SetupShop(availableShopItems);
+				LoadShopItemsFromResources();
+				_itemService.SetupShop(_loadedShopItems);
 				CreateShopItemUIs();
 			}
 		}

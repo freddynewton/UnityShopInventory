@@ -21,6 +21,35 @@ namespace Azulon.UI
 
 		private readonly List<InventoryItemUI> _inventoryItemUIs = new List<InventoryItemUI>();
 
+		// Public Methods
+		public void OpenInventory()
+		{
+			if (inventoryPanel != null)
+			{
+				inventoryPanel.SetActive(true);
+				RefreshInventoryDisplay();
+			}
+		}
+
+		public void CloseInventory()
+		{
+			if (inventoryPanel != null)
+				inventoryPanel.SetActive(false);
+		}
+
+		public void ToggleInventory()
+		{
+			if (inventoryPanel != null)
+			{
+				bool isActive = inventoryPanel.activeSelf;
+				if (isActive)
+					CloseInventory();
+				else
+					OpenInventory();
+			}
+		}
+
+		// Private Methods
 		private void Start()
 		{
 			SetupEventListeners();
@@ -108,33 +137,6 @@ namespace Azulon.UI
 			{
 				int totalItems = _itemService.GetInventoryItems().Count;
 				inventoryTitleText.text = $"Inventory ({totalItems} items)";
-			}
-		}
-
-		public void OpenInventory()
-		{
-			if (inventoryPanel != null)
-			{
-				inventoryPanel.SetActive(true);
-				RefreshInventoryDisplay();
-			}
-		}
-
-		public void CloseInventory()
-		{
-			if (inventoryPanel != null)
-				inventoryPanel.SetActive(false);
-		}
-
-		public void ToggleInventory()
-		{
-			if (inventoryPanel != null)
-			{
-				bool isActive = inventoryPanel.activeSelf;
-				if (isActive)
-					CloseInventory();
-				else
-					OpenInventory();
 			}
 		}
 
