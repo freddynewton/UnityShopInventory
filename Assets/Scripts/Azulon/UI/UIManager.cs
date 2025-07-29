@@ -16,9 +16,6 @@ namespace Azulon.UI
 		[SerializeField] private Button shopButton;
 		[SerializeField] private Button inventoryButton;
 
-		[Header("Input Actions")]
-		[SerializeField] private InputActionAsset inputActions;
-
 		[Header("Visual Feedback")]
 		[SerializeField] private Color selectedButtonColor = Color.yellow;
 		[SerializeField] private Color normalButtonColor = Color.white;
@@ -26,9 +23,6 @@ namespace Azulon.UI
 		[Inject] private IItemService _itemService;
 
 		private UIState _currentState = UIState.Shop;
-		private InputActionMap _uiActionMap;
-		private InputAction _shopAction;
-		private InputAction _inventoryAction;
 
 		// Public Properties
 		public bool IsShopOpen => _currentState == UIState.Shop;
@@ -78,76 +72,13 @@ namespace Azulon.UI
 		// Private Methods
 		private void Start()
 		{
-			SetupInputActions();
 			SetupNavigation();
 			SetInitialState();
-		}
-
-		private void OnEnable()
-		{
-			EnableInputActions();
-		}
-
-		private void OnDisable()
-		{
-			DisableInputActions();
 		}
 
 		private void OnDestroy()
 		{
 			RemoveNavigationListeners();
-		}
-
-		private void SetupInputActions()
-		{
-			if (inputActions == null)
-			{
-				return;
-			}
-
-			_uiActionMap = inputActions.FindActionMap("UI");
-
-			if (_uiActionMap == null)
-			{
-				return;
-			}
-
-			_inventoryAction = _uiActionMap.FindAction("OpenInventory");
-			_shopAction = _uiActionMap.FindAction("OpenShop");
-		}
-
-		private void EnableInputActions()
-		{
-			if (_shopAction != null)
-			{
-				_shopAction.performed += OnShopActionPerformed;
-				_shopAction.Enable();
-			}
-
-			if (_inventoryAction != null)
-			{
-				_inventoryAction.performed += OnInventoryActionPerformed;
-				_inventoryAction.Enable();
-			}
-		}
-
-		private void DisableInputActions()
-		{
-			_shopAction.performed -= OnShopActionPerformed;
-			_shopAction.Disable();
-
-			_inventoryAction.performed -= OnInventoryActionPerformed;
-			_inventoryAction.Disable();
-		}
-
-		private void OnShopActionPerformed(InputAction.CallbackContext context)
-		{
-			OpenShop();
-		}
-
-		private void OnInventoryActionPerformed(InputAction.CallbackContext context)
-		{
-			OpenInventory();
 		}
 
 		private void SetupNavigation()
