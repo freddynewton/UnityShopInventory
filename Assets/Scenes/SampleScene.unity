@@ -250,8 +250,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1008937656}
   m_HandleRect: {fileID: 1008937655}
   m_Direction: 0
-  m_Value: 0.4999237
-  m_Size: 0.99647856
+  m_Value: 0.5
+  m_Size: 0.99647886
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -513,8 +513,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1279883996}
   m_HandleRect: {fileID: 1279883995}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.99999994
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -734,14 +734,91 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 3
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 1
+  m_Spacing: 20
+  m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &541668753
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 541668754}
+  - component: {fileID: 541668755}
+  - component: {fileID: 541668756}
+  m_Layer: 5
+  m_Name: Filterbar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &541668754
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 541668753}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 780924851}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50, y: -50}
+  m_SizeDelta: {x: 1400, y: 100}
+  m_Pivot: {x: 0, y: 1}
+--- !u!114 &541668755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 541668753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 25
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
+--- !u!114 &541668756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 541668753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e858a88391caf114fb83cb8beeede377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _filterButtonPrefab: {fileID: 7581906815642919045, guid: 4534fd69f41b84e42a1dd4b449a44513, type: 3}
+  _shopController: {fileID: 780924852}
 --- !u!1 &751144119
 GameObject:
   m_ObjectHideFlags: 0
@@ -984,6 +1061,7 @@ RectTransform:
   m_Children:
   - {fileID: 1548855068}
   - {fileID: 1514656450}
+  - {fileID: 541668754}
   - {fileID: 2074130082}
   - {fileID: 6787244185394125706}
   m_Father: {fileID: 1089438167}
@@ -1728,8 +1806,6 @@ MonoBehaviour:
   inventoryController: {fileID: 7371907}
   shopButton: {fileID: 1422636189}
   inventoryButton: {fileID: 1478917349}
-  selectedButtonColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  normalButtonColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1222950467
 GameObject:
   m_ObjectHideFlags: 0
@@ -2930,8 +3006,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 50, y: 0}
-  m_SizeDelta: {x: 1400, y: -100}
+  m_AnchoredPosition: {x: 50, y: -50.00003}
+  m_SizeDelta: {x: 1400, y: -199.99994}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &2074130083
 MonoBehaviour:

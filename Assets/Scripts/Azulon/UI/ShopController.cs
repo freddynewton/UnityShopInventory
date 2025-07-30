@@ -36,6 +36,8 @@ namespace Azulon.UI
 
 		private readonly List<ShopItemUI> _shopItemUIs = new List<ShopItemUI>();
 
+		private string _activeCategoryFilter = null;
+
 		public void OnItemSelected(ItemDataSO itemSO)
 		{
 			_selectedItemSO = itemSO;
@@ -292,6 +294,40 @@ namespace Azulon.UI
 			{
 				Debug.Log($"Failed to purchase from preview: {_selectedItemSO.ItemData.Name}");
 			}
+		}
+
+		public void FilterByCategory(string category)
+		{
+			_activeCategoryFilter = category;
+			UpdateShopItemsByCategory();
+		}
+
+		private void UpdateShopItemsByCategory()
+		{
+			// Remove existing shop item UIs
+			foreach (var itemUI in _shopItemUIs)
+			{
+				if (itemUI != null)
+					Destroy(itemUI.gameObject);
+			}
+			_shopItemUIs.Clear();
+
+			// Filter items
+			List<ItemDataSO> filteredItems;
+			if (string.IsNullOrEmpty(_activeCategoryFilter) || _activeCategoryFilter == "All")
+			{
+				filteredItems = new List<ItemDataSO>(_loadedShopItems);
+			}
+			else
+			{
+				filteredItems = _loadedShopItems.FindAll(item => item.ItemData.ItemType.ToString() == _activeCategoryFilter);
+			}
+
+			foreach (var itemSO in filteredItems)
+			{
+				CreateShopItemUI(itemSO);
+			}
+			EnsureScrollableContent();
 		}
 
 		// Editor helper to setup shop items
