@@ -17,7 +17,6 @@ namespace Azulon.UI
         [SerializeField] private Transform shopItemsContainer;
         [SerializeField] private GameObject shopItemPrefab;
         [SerializeField] private TextMeshProUGUI currencyText;
-        [SerializeField] private Button closeShopButton;
 
         [Header("Shop Preview")]
         [SerializeField] private GameObject shopItemPreview;
@@ -123,6 +122,7 @@ namespace Azulon.UI
                     _loadedShopItems.Add(itemSO);
                 }
             }
+
             Debug.Log($"ShopController: Loaded {_loadedShopItems.Count} items from Resources");
         }
 
@@ -141,19 +141,12 @@ namespace Azulon.UI
         {
             _itemService.OnCurrencyChanged += UpdateCurrencyDisplay;
             _itemService.OnItemPurchased += OnItemPurchased;
-
-            if (closeShopButton != null)
-            {
-                closeShopButton.onClick.AddListener(CloseShop);
-            }
         }
 
         private void RemoveEventListeners()
         {
             _itemService.OnCurrencyChanged -= UpdateCurrencyDisplay;
             _itemService.OnItemPurchased -= OnItemPurchased;
-
-            closeShopButton.onClick.RemoveListener(CloseShop);
         }
 
         private void CreateShopItemUIs()
@@ -162,8 +155,11 @@ namespace Azulon.UI
             foreach (var itemUI in _shopItemUIs)
             {
                 if (itemUI != null)
+                {
                     Destroy(itemUI.gameObject);
+                }
             }
+
             _shopItemUIs.Clear();
 
             // Create new shop item UIs
@@ -276,7 +272,6 @@ namespace Azulon.UI
             if (previewPurchaseButtonText != null)
             {
                 previewPurchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
-                previewPurchaseButtonText.color = canAfford ? Color.white : Color.red;
             }
         }
 

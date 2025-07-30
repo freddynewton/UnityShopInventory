@@ -3,29 +3,29 @@ using UnityEngine.UI;
 using TMPro;
 using Azulon.Data;
 using Azulon.Services;
+using UnityEngine.EventSystems;
+using System.Collections;
+using Zenject;
 
 namespace Azulon.UI
 {
-    public class ShopItemUI : MonoBehaviour
+    public class ShopItemUI : MonoBehaviour, IPointerClickHandler
     {
         [Header("UI References")]
-        [SerializeField] private Image itemIcon;
-        [SerializeField] private TextMeshProUGUI itemNameText;
-        [SerializeField] private TextMeshProUGUI itemPriceText;
-        [SerializeField] private Button purchaseButton;
-        [SerializeField] private TextMeshProUGUI purchaseButtonText;
-        [SerializeField] private Button selectButton;
-
-        [Header("Visual Settings")]
-        [SerializeField] private Color affordableColor = Color.white;
-        [SerializeField] private Color unaffordableColor = Color.gray;
-        [SerializeField] private Color selectedColor = Color.yellow;
+        [SerializeField] private Image _itemIcon;
+        [SerializeField] private Image _backgroundImage;
+        [SerializeField] private TextMeshProUGUI _itemNameText;
+        [SerializeField] private TextMeshProUGUI _itemPriceText;
+        [SerializeField] private Button _purchaseButton;
+        [SerializeField] private TextMeshProUGUI _purchaseButtonText;
 
         public ItemDataSO ItemDataSO { get; private set; }
-        
+
         private ShopController _shopController;
         private IItemService _itemService;
         private bool _isSelected = false;
+
+        [Inject] private UIColorSettingsSO _uiColorSettings;
 
         public void Initialize(ItemDataSO itemDataSO, IItemService itemService, ShopController shopController)
         {
@@ -48,82 +48,36 @@ namespace Azulon.UI
         {
             var itemData = ItemDataSO.ItemData;
 
-            if (itemIcon != null)
-            {
-                itemIcon.sprite = itemData.Icon;
-                itemIcon.gameObject.SetActive(itemData.Icon != null);
-            }
-
-            if (itemNameText != null)
-                itemNameText.text = itemData.Name;
-
-            if (itemPriceText != null)
-                itemPriceText.text = $"{itemData.Price} Gold";
+            _itemIcon.sprite = itemData.Icon;
+            _itemIcon.gameObject.SetActive(itemData.Icon != null);
+            _itemNameText.text = itemData.Name;
+            _itemPriceText.text = $"{itemData.Price} Gold";
         }
 
         private void SetupButtons()
         {
-            // Setup purchase button
-            if (purchaseButton != null)
-            {
-                purchaseButton.onClick.RemoveAllListeners();
-                purchaseButton.onClick.AddListener(OnPurchaseClicked);
-            }
-
-            // Setup select button (for clicking the item to show preview)
-            if (selectButton != null)
-            {
-                selectButton.onClick.RemoveAllListeners();
-                selectButton.onClick.AddListener(OnSelectClicked);
-            }
-            else
-            {
-                // If no separate select button, use the whole item as clickable
-                Button itemButton = GetComponent<Button>();
-                if (itemButton == null)
-                {
-                    itemButton = gameObject.AddComponent<Button>();
-                    // Ensure button doesn't interfere with layout
-                    itemButton.transition = Selectable.Transition.None;
-                }
-                    
-                itemButton.onClick.RemoveAllListeners();
-                itemButton.onClick.AddListener(OnSelectClicked);
-            }
-
-            if (purchaseButtonText != null)
-                purchaseButtonText.text = "Buy";
+            _purchaseButton.onClick.RemoveAllListeners();
+            _purchaseButton.onClick.AddListener(OnPurchaseClicked);
+            _purchaseButtonText.text = "Buy";
         }
 
         public void UpdateAffordability()
         {
             if (_itemService == null || ItemDataSO == null)
+            {
                 return;
+            }
 
             bool canAfford = _itemService.CanPurchaseItem(ItemDataSO);
 
             // Update button interactability
-            if (purchaseButton != null)
-                purchaseButton.interactable = canAfford;
+            _purchaseButton.interactable = canAfford;
 
             // Update visual appearance based on selection and affordability
-            Color targetColor = _isSelected ? selectedColor : (canAfford ? affordableColor : unaffordableColor);
+            Color targetColor = _isSelected ? _uiColorSettings.primaryColor : (canAfford ? _uiColorSettings.accentColor: _uiColorSettings.disabledColor);
+            _purchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
 
-            if (itemIcon != null)
-                itemIcon.color = targetColor;
-
-            if (itemNameText != null)
-                itemNameText.color = targetColor;
-
-            if (itemPriceText != null)
-                itemPriceText.color = targetColor;
-
-            // Update button text
-            if (purchaseButtonText != null)
-            {
-                purchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
-                purchaseButtonText.color = canAfford ? Color.white : Color.red;
-            }
+            _backgroundImage.color = targetColor;
         }
 
         public void SetSelected(bool selected)
@@ -132,18 +86,22 @@ namespace Azulon.UI
             UpdateAffordability(); // This will update colors based on selection state
         }
 
-        private void OnSelectClicked()
+        public void OnPointerClick(PointerEventData eventData)
         {
-            if (_shopController != null && ItemDataSO != null)
+            if (_shopController == null && ItemDataSO == null)
             {
-                _shopController.OnItemSelected(ItemDataSO);
+                return;
             }
+
+            _shopController.OnItemSelected(ItemDataSO);
         }
 
         private void OnPurchaseClicked()
         {
             if (_itemService == null || ItemDataSO == null)
+            {
                 return;
+            }
 
             bool success = _itemService.PurchaseItem(ItemDataSO, 1);
 
@@ -158,28 +116,26 @@ namespace Azulon.UI
             }
         }
 
-        private System.Collections.IEnumerator PurchaseFeedback()
+        private IEnumerator PurchaseFeedback()
         {
-            if (purchaseButtonText != null)
+            if (_purchaseButtonText != null)
             {
-                string originalText = purchaseButtonText.text;
-                purchaseButtonText.text = "Purchased!";
-                purchaseButtonText.color = Color.green;
+                string originalText = _purchaseButtonText.text;
+                _purchaseButtonText.text = "Purchased!";
 
                 yield return new WaitForSeconds(0.5f);
 
-                purchaseButtonText.text = originalText;
+                _purchaseButtonText.text = originalText;
                 UpdateAffordability();
             }
         }
 
         private void OnDestroy()
         {
-            if (purchaseButton != null)
-                purchaseButton.onClick.RemoveAllListeners();
-                
-            if (selectButton != null)
-                selectButton.onClick.RemoveAllListeners();
+            if (_purchaseButton != null)
+            {
+                _purchaseButton.onClick.RemoveAllListeners();
+            }
         }
-	}
+    }
 }

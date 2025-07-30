@@ -333,15 +333,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1700e71f9eb806479c2f58ae27a55d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemIcon: {fileID: 2341563909979306302}
-  itemNameText: {fileID: 5877737655592756510}
-  itemPriceText: {fileID: 111655123329058361}
-  purchaseButton: {fileID: 9186486218518016634}
-  purchaseButtonText: {fileID: 106706741907152607}
-  selectButton: {fileID: 0}
-  affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  unaffordableColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  selectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  _itemIcon: {fileID: 2341563909979306302}
+  _backgroundImage: {fileID: 7396836314689434774}
+  _itemNameText: {fileID: 5877737655592756510}
+  _itemPriceText: {fileID: 111655123329058361}
+  _purchaseButton: {fileID: 9186486218518016634}
+  _purchaseButtonText: {fileID: 106706741907152607}
+  _affordableColor: {r: 1, g: 1, b: 1, a: 1}
+  _unaffordableColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _selectedColor: {r: 1, g: 0.70820546, b: 0.15408784, a: 1}
 --- !u!114 &3734874303069807547
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,11 +1,16 @@
 using Zenject;
 using Azulon.Services;
+using System;
+using UnityEngine;
+using Azulon.UI;
 
 namespace Azulon.Installers
 {
 	public class GameInstaller : MonoInstaller
 	{
-		public override void InstallBindings()
+		[SerializeField] private UIColorSettingsSO UIColorSettings;
+
+        public override void InstallBindings()
 		{
 			// Bind ItemService as singleton
 			Container.Bind<IItemService>()
@@ -13,8 +18,13 @@ namespace Azulon.Installers
 					 .AsSingle()
 					 .NonLazy();
 
-			// Initialize the ItemService with saved data
-			Container.Resolve<IItemService>().LoadData();
+			Container.Bind<UIColorSettingsSO>()
+                     .FromInstance(UIColorSettings)
+                     .AsSingle()
+                     .NonLazy();
+
+            // Initialize the ItemService with saved data
+            Container.Resolve<IItemService>().LoadData();
 		}
 	}
 }
