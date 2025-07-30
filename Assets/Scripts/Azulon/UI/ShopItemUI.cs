@@ -6,10 +6,11 @@ using Azulon.Services;
 using UnityEngine.EventSystems;
 using System.Collections;
 using Zenject;
+using DG.Tweening;
 
 namespace Azulon.UI
 {
-	public class ShopItemUI : MonoBehaviour, IPointerClickHandler
+	public class ShopItemUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 	{
 		[Header("UI References")]
 		[SerializeField] private Image _itemIcon;
@@ -18,6 +19,7 @@ namespace Azulon.UI
 		[SerializeField] private TextMeshProUGUI _itemPriceText;
 		[SerializeField] private Button _purchaseButton;
 		[SerializeField] private TextMeshProUGUI _purchaseButtonText;
+		[SerializeField] private TextMeshProUGUI _itemAmountText;
 
 		public ItemDataSO ItemDataSO { get; private set; }
 
@@ -50,8 +52,16 @@ namespace Azulon.UI
 
 			_itemIcon.sprite = itemData.Icon;
 			_itemIcon.gameObject.SetActive(itemData.Icon != null);
+			if (_itemIcon.rectTransform != null)
+			{
+				_itemIcon.rectTransform.sizeDelta = new Vector2(128, 128); // Beispielgröße, ggf. anpassen
+			}
 			_itemNameText.text = itemData.Name;
 			_itemPriceText.text = $"{itemData.Price} Gold";
+			if (_itemAmountText != null)
+			{
+				_itemAmountText.text = $"x{itemData.Quantity}";
+			}
 		}
 
 		private void SetupButtons()
@@ -128,6 +138,24 @@ namespace Azulon.UI
 				_purchaseButtonText.text = originalText;
 				UpdateAffordability();
 			}
+		}
+
+		public void OnPointerEnter(PointerEventData eventData)
+		{
+			transform.DOKill();
+			transform.DOScale(1.1f, 0.25f).SetEase(Ease.OutBack);
+
+			_itemIcon.DOKill();
+			_itemIcon.transform.DOScale(0.9f, 0.25f).SetEase(Ease.OutBack);
+		}
+
+		public void OnPointerExit(PointerEventData eventData)
+		{
+			transform.DOKill();
+			transform.DOScale(1.0f, 0.2f).SetEase(Ease.OutBack);
+
+			_itemIcon.DOKill();
+			_itemIcon.transform.DOScale(1, 0.25f).SetEase(Ease.OutBack);
 		}
 
 		private void OnDestroy()

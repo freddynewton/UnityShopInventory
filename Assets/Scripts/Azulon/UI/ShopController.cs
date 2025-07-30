@@ -19,14 +19,7 @@ namespace Azulon.UI
 		[SerializeField] private TextMeshProUGUI currencyText;
 
 		[Header("Shop Preview")]
-		[SerializeField] private GameObject shopItemPreview;
-		[SerializeField] private Image previewItemIcon;
-		[SerializeField] private TextMeshProUGUI previewItemName;
-		[SerializeField] private TextMeshProUGUI previewItemPrice;
-		[SerializeField] private ScrollRect previewDescriptionScrollRect;
-		[SerializeField] private TextMeshProUGUI previewItemDescription;
-		[SerializeField] private Button previewPurchaseButton;
-		[SerializeField] private TextMeshProUGUI previewPurchaseButtonText;
+		[SerializeField] private ItemPreviewUI itemPreviewUI;
 
 		private ItemDataSO _selectedItemSO;
 		private List<ItemDataSO> _loadedShopItems = new List<ItemDataSO>();
@@ -48,7 +41,10 @@ namespace Azulon.UI
 				itemUI.SetSelected(itemUI.ItemDataSO == itemSO);
 			}
 
-			UpdatePreview();
+			if (_selectedItemSO != null)
+				itemPreviewUI.ShowPreview(_selectedItemSO);
+			else
+				itemPreviewUI.HidePreview();
 		}
 
 		public void OpenShop()
@@ -96,6 +92,7 @@ namespace Azulon.UI
 			InitializeShop();
 			SetupEventListeners();
 			UpdateCurrencyDisplay(_itemService.Currency);
+			itemPreviewUI.Setup(_itemService, OnPreviewPurchase);
 		}
 
 		private void OnDestroy()
@@ -108,7 +105,7 @@ namespace Azulon.UI
 			LoadShopItemsFromResources();
 			_itemService.SetupShop(_loadedShopItems);
 			CreateShopItemUIs();
-			SetupPreview();
+			itemPreviewUI.HidePreview();
 		}
 
 		private void LoadShopItemsFromResources()
@@ -116,7 +113,7 @@ namespace Azulon.UI
 			_loadedShopItems.Clear();
 
 			// Load all ItemDataSO from Resources folder
-			ItemDataSO[] itemDataSOs = Resources.LoadAll<ItemDataSO>("");
+			ItemDataSO[] itemDataSOs = Resources.LoadAll<ItemDataSO>("Items/");
 
 			foreach (var itemSO in itemDataSOs)
 			{
@@ -127,17 +124,6 @@ namespace Azulon.UI
 			}
 
 			Debug.Log($"ShopController: Loaded {_loadedShopItems.Count} items from Resources");
-		}
-
-		private void SetupPreview()
-		{
-			shopItemPreview.SetActive(false);
-
-			previewPurchaseButton.onClick.RemoveAllListeners();
-			previewPurchaseButton.onClick.AddListener(OnPreviewPurchaseClicked);
-
-			LayoutRebuilder.ForceRebuildLayoutImmediate(shopScrollRect.content);
-			LayoutRebuilder.ForceRebuildLayoutImmediate(previewDescriptionScrollRect.content);
 		}
 
 		private void SetupEventListeners()
@@ -181,9 +167,7 @@ namespace Azulon.UI
 			if (shopScrollRect != null && shopScrollRect.content != null)
 			{
 				LayoutRebuilder.ForceRebuildLayoutImmediate(shopScrollRect.content);
-				LayoutRebuilder.ForceRebuildLayoutImmediate(previewDescriptionScrollRect.content);
 				shopScrollRect.verticalNormalizedPosition = 1f; // Reset scroll position to top
-				previewDescriptionScrollRect.verticalNormalizedPosition = 1f; // Reset preview scroll position to top
 			}
 			else
 			{
@@ -228,72 +212,13 @@ namespace Azulon.UI
 			// Update preview if the purchased item is currently selected
 			if (_selectedItemSO != null)
 			{
-				UpdatePreviewAffordability();
+				itemPreviewUI.UpdateAffordability();
 			}
 		}
 
-		private void UpdatePreview()
+		private void OnPreviewPurchase(ItemDataSO itemSO)
 		{
-			if (_selectedItemSO == null || _selectedItemSO.ItemData == null)
-			{
-				if (shopItemPreview != null)
-				{
-					shopItemPreview.SetActive(false);
-				}
-
-				return;
-			}
-
-			shopItemPreview.SetActive(true);
-
-			var itemData = _selectedItemSO.ItemData;
-
-			previewItemIcon.sprite = itemData.Icon;
-			previewItemIcon.gameObject.SetActive(itemData.Icon != null);
-
-			previewItemName.text = itemData.Name;
-			previewItemPrice.text = $"{itemData.Price} Gold";
-			previewItemDescription.text = itemData.Description;
-
-			Canvas.ForceUpdateCanvases();
-			LayoutRebuilder.ForceRebuildLayoutImmediate(previewDescriptionScrollRect.content);
-
-			UpdatePreviewAffordability();
-		}
-
-		private void UpdatePreviewAffordability()
-		{
-			if (_selectedItemSO == null || previewPurchaseButton == null)
-			{
-				return;
-			}
-
-			bool canAfford = _itemService.CanPurchaseItem(_selectedItemSO);
-			previewPurchaseButton.interactable = canAfford;
-
-			if (previewPurchaseButtonText != null)
-			{
-				previewPurchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
-			}
-		}
-
-		private void OnPreviewPurchaseClicked()
-		{
-			if (_selectedItemSO == null || _itemService == null)
-			{
-				return;
-			}
-
-			bool success = _itemService.PurchaseItem(_selectedItemSO, 1);
-
-			if (success)
-			{
-				Debug.Log($"Successfully purchased from preview: {_selectedItemSO.ItemData.Name}");
-			}
-			else
-			{
-				Debug.Log($"Failed to purchase from preview: {_selectedItemSO.ItemData.Name}");
-			}
+			// Optionally handle additional logic after purchase from preview
 		}
 
 		public void FilterByCategory(string category)
