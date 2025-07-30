@@ -69,7 +69,17 @@ namespace Azulon.UI
 
 		public void OnPointerClick(PointerEventData eventData)
 		{
+			// Notify the inventory controller of this selection
+			// This will handle deselecting other items
+			if (_inventoryController != null)
+			{
+				_inventoryController.SelectItem(this);
+			}
+			
+			// Mark this item as selected
 			SetSelected(true);
+			
+			// Show the item preview
 			_inventoryController?.ShowItemPreview(_itemData);
 		}
 

@@ -79,7 +79,6 @@ namespace Azulon.UI
 
 		private void SetInitialState()
 		{
-			// Start with Shop open
 			OpenShop();
 		}
 

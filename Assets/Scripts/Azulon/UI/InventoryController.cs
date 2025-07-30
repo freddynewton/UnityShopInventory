@@ -19,6 +19,7 @@ namespace Azulon.UI
 
 		private readonly List<InventoryItemUI> _inventoryItemUIs = new List<InventoryItemUI>();
 		private string _activeCategoryFilter = null;
+		private InventoryItemUI _currentlySelectedItem = null;
 
 		// Public Methods
 		public void OpenInventory()
@@ -49,6 +50,19 @@ namespace Azulon.UI
 		{
 			_activeCategoryFilter = category;
 			RefreshInventoryDisplay();
+		}
+
+		// Method to select an item and deselect all others
+		public void SelectItem(InventoryItemUI selectedItem)
+		{
+			// Deselect current item if there is one and it's different from the new selection
+			if (_currentlySelectedItem != null && _currentlySelectedItem != selectedItem)
+			{
+				_currentlySelectedItem.SetSelected(false);
+			}
+
+			// Update the current selection
+			_currentlySelectedItem = selectedItem;
 		}
 
 		// Private Methods
@@ -103,6 +117,7 @@ namespace Azulon.UI
 			}
 
 			_inventoryItemUIs.Clear();
+			_currentlySelectedItem = null; // Reset selected item when clearing the display
 		}
 
 		private void CreateInventoryItemUIs()

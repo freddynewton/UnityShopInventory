@@ -78,7 +78,9 @@ namespace Azulon.Services
 		public bool AddItem(ItemData item)
 		{
 			if (item == null || !item.IsValid())
+			{
 				return false;
+			}
 
 			var existingItem = _inventory.FirstOrDefault(i => i.Id == item.Id);
 
@@ -101,7 +103,9 @@ namespace Azulon.Services
 			var item = _inventory.FirstOrDefault(i => i.Id == itemId);
 
 			if (item == null || item.Quantity < quantity)
+			{
 				return false;
+			}
 
 			item.Quantity -= quantity;
 
@@ -129,21 +133,22 @@ namespace Azulon.Services
 
 		public bool CanPurchaseItem(ItemData item)
 		{
-			if (item == null || !item.IsValid())
-				return false;
-
-			return _currency >= item.Price;
+			return item == null || !item.IsValid() ? false : _currency >= item.Price;
 		}
 
 		public bool PurchaseItem(ItemData item, int quantity = 1)
 		{
 			if (item == null || !item.IsValid() || quantity <= 0)
+			{
 				return false;
+			}
 
 			int totalCost = item.Price * quantity;
 
 			if (!SpendCurrency(totalCost))
+			{
 				return false;
+			}
 
 			var purchasedItem = new ItemData(item) { Quantity = quantity };
 			AddItem(purchasedItem);
