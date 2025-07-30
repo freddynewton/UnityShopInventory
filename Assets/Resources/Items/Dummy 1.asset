@@ -9,13 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8a9732527355fc49840f7a36388b014, type: 3}
-  m_Name: DummyItem 6
+  m_Script: {fileID: 11500000, guid: e10acd02b14fb0d45b6651fa4097addf, type: 3}
+  m_Name: Dummy 1
   m_EditorClassIdentifier: 
   itemData:
-    id: Car
-    itemName: Orange Car
-    icon: {fileID: 21300000, guid: 86b52dc13c35f424da1ce045e6df2089, type: 3}
+    id: Passion
+    itemName: Passion
+    icon: {fileID: 21300000, guid: ed22d6d04de2a31429962136f358e89c, type: 3}
     description: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
       nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
       diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
@@ -24,6 +24,6 @@ MonoBehaviour:
       tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
       At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
       no sea takimata sanctus est Lorem ipsum dolor sit amet.
-    price: 1
+    price: 50
     quantity: 10
-    itemType: 0
+    itemType: 1

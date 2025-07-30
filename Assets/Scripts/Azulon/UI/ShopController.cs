@@ -21,8 +21,8 @@ namespace Azulon.UI
 		[Header("Shop Preview")]
 		[SerializeField] private ItemPreviewUI itemPreviewUI;
 
-		private ItemDataSO _selectedItemSO;
-		private List<ItemDataSO> _loadedShopItems = new List<ItemDataSO>();
+		private ItemData _selectedItem;
+		private List<ItemData> _loadedShopItems = new List<ItemData>();
 
 		[Inject] private IItemService _itemService;
 		[Inject] private DiContainer _diContainer;
@@ -31,20 +31,26 @@ namespace Azulon.UI
 
 		private string _activeCategoryFilter = null;
 
-		public void OnItemSelected(ItemDataSO itemSO)
+		public void OnItemSelected(ItemData itemData)
 		{
-			_selectedItemSO = itemSO;
+			_selectedItem = itemData;
 
 			// Update selection state of all shop item UIs
 			foreach (var itemUI in _shopItemUIs)
 			{
-				itemUI.SetSelected(itemUI.ItemDataSO == itemSO);
+				itemUI.SetSelected(itemUI.ItemData.Id == _selectedItem.Id);
 			}
 
-			if (_selectedItemSO != null)
-				itemPreviewUI.ShowPreview(_selectedItemSO);
+			if (_selectedItem != null)
+			{
+				itemPreviewUI.ShowPreview(_selectedItem);
+				// Set up custom purchase and sell actions for the shop context
+				itemPreviewUI.Setup(_itemService, OnPreviewPurchase, OnPreviewSell);
+			}
 			else
+			{
 				itemPreviewUI.HidePreview();
+			}
 		}
 
 		public void OpenShop()
@@ -92,7 +98,6 @@ namespace Azulon.UI
 			InitializeShop();
 			SetupEventListeners();
 			UpdateCurrencyDisplay(_itemService.Currency);
-			itemPreviewUI.Setup(_itemService, OnPreviewPurchase);
 		}
 
 		private void OnDestroy()
@@ -112,14 +117,14 @@ namespace Azulon.UI
 		{
 			_loadedShopItems.Clear();
 
-			// Load all ItemDataSO from Resources folder
-			ItemDataSO[] itemDataSOs = Resources.LoadAll<ItemDataSO>("Items/");
+			// Load all ItemData from Resources folder
+			ItemDataSO[] itemDataSOs = Resources.LoadAll<ItemDataSO>("Items");
 
 			foreach (var itemSO in itemDataSOs)
 			{
 				if (itemSO != null && itemSO.ItemData != null && itemSO.ItemData.IsValid())
 				{
-					_loadedShopItems.Add(itemSO);
+					_loadedShopItems.Add(itemSO.ItemData);
 				}
 			}
 
@@ -175,7 +180,7 @@ namespace Azulon.UI
 			}
 		}
 
-		private void CreateShopItemUI(ItemDataSO itemSO)
+		private void CreateShopItemUI(ItemData itemSO)
 		{
 			if (shopItemPrefab == null || shopItemsContainer == null || itemSO == null)
 			{
@@ -210,15 +215,52 @@ namespace Azulon.UI
 			}
 
 			// Update preview if the purchased item is currently selected
-			if (_selectedItemSO != null)
+			if (_selectedItem != null)
 			{
 				itemPreviewUI.UpdateAffordability();
 			}
 		}
 
-		private void OnPreviewPurchase(ItemDataSO itemSO)
+		private void OnPreviewPurchase(ItemData itemData)
 		{
-			// Optionally handle additional logic after purchase from preview
+			if (itemData == null)
+			{
+				return;
+			}
+
+			bool success = _itemService.PurchaseItem(itemData, 1);
+			if (success)
+			{
+				Debug.Log($"ShopController: Successfully purchased {itemData.Name}");
+			}
+			else
+			{
+				Debug.LogWarning($"ShopController: Failed to purchase {itemData.Name}");
+			}
+		}
+
+		private void OnPreviewSell(ItemData itemData)
+		{
+			if (itemData == null)
+			{
+				return;
+			}
+
+			if (_itemService.RemoveItem(itemData.Id, 1))
+			{
+				_itemService.AddCurrency(itemData.Price);
+				Debug.Log($"ShopController: Successfully sold {itemData.Name}");
+
+				// If no more items of this type, hide the preview
+				if (_itemService.GetItemQuantity(itemData.Id) <= 0)
+				{
+					itemPreviewUI.HidePreview();
+				}
+			}
+			else
+			{
+				Debug.LogWarning($"ShopController: Failed to sell {itemData.Name}");
+			}
 		}
 
 		public void FilterByCategory(string category)
@@ -233,19 +275,21 @@ namespace Azulon.UI
 			foreach (var itemUI in _shopItemUIs)
 			{
 				if (itemUI != null)
+				{
 					Destroy(itemUI.gameObject);
+				}
 			}
 			_shopItemUIs.Clear();
 
 			// Filter items
-			List<ItemDataSO> filteredItems;
+			List<ItemData> filteredItems;
 			if (string.IsNullOrEmpty(_activeCategoryFilter) || _activeCategoryFilter == "All")
 			{
-				filteredItems = new List<ItemDataSO>(_loadedShopItems);
+				filteredItems = new List<ItemData>(_loadedShopItems);
 			}
 			else
 			{
-				filteredItems = _loadedShopItems.FindAll(item => item.ItemData.ItemType.ToString() == _activeCategoryFilter);
+				filteredItems = _loadedShopItems.FindAll(item => item.ItemType.ToString() == _activeCategoryFilter);
 			}
 
 			foreach (var itemSO in filteredItems)
@@ -253,18 +297,6 @@ namespace Azulon.UI
 				CreateShopItemUI(itemSO);
 			}
 			EnsureScrollableContent();
-		}
-
-		// Editor helper to setup shop items
-		[ContextMenu("Refresh Shop Items")]
-		private void RefreshShopItems()
-		{
-			if (Application.isPlaying && _itemService != null)
-			{
-				LoadShopItemsFromResources();
-				_itemService.SetupShop(_loadedShopItems);
-				CreateShopItemUIs();
-			}
 		}
 	}
 }

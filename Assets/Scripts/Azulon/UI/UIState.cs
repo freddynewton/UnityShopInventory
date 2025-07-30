@@ -1,8 +1,9 @@
 namespace Azulon.UI
 {
-    public enum UIState
-    {
-        Shop,
-        Inventory
-    }
+	public enum UIState
+	{
+		None,
+		Shop,
+		Inventory
+	}
 }

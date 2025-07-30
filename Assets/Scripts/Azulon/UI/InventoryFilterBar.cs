@@ -7,10 +7,9 @@ using TMPro;
 
 namespace Azulon.UI
 {
-	public class ShopFilterBar : MonoBehaviour
+	public class InventoryFilterBar : MonoBehaviour
 	{
 		[SerializeField] private GameObject _filterButtonPrefab;
-		[SerializeField] private ShopController _shopController;
 		[SerializeField] private InventoryController _inventoryController;
 
 		[Inject] private UIColorSettingsSO _uiColorSettings;
@@ -47,9 +46,7 @@ namespace Azulon.UI
 		private void OnButtonClick(string category)
 		{
 			_selectedCategory = category;
-			_shopController.FilterByCategory(category);
 			_inventoryController.FilterByCategory(category);
-
 			UpdateButtonColors();
 		}
 

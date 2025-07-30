@@ -29,10 +29,10 @@ namespace Azulon.Services
 		void ClearInventory();
 
 		// Shop Operations
-		IReadOnlyList<ItemDataSO> GetShopItems();
-		bool CanPurchaseItem(ItemDataSO itemSO);
-		bool PurchaseItem(ItemDataSO itemSO, int quantity = 1);
-		void SetupShop(List<ItemDataSO> shopItems);
+		IReadOnlyList<ItemData> GetShopItems();
+		bool CanPurchaseItem(ItemData item);
+		bool PurchaseItem(ItemData item, int quantity = 1);
+		void SetupShop(List<ItemData> shopItems);
 
 		// Data Persistence
 		void SaveData();

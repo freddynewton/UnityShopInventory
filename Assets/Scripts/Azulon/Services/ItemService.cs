@@ -17,7 +17,7 @@ namespace Azulon.Services
 
 		// Private fields
 		private readonly List<ItemData> _inventory = new List<ItemData>();
-		private readonly List<ItemDataSO> _shopItems = new List<ItemDataSO>();
+		private readonly List<ItemData> _shopItems = new List<ItemData>();
 		private int _currency = 100; // Starting currency
 
 		// Properties
@@ -50,7 +50,18 @@ namespace Azulon.Services
 		// Inventory Operations
 		public IReadOnlyList<ItemData> GetInventoryItems()
 		{
-			return _inventory.AsReadOnly();
+			// Stellt sicher, dass pro ID nur ein Item existiert und Quantity summiert ist
+			var grouped = _inventory
+				.GroupBy(i => i.Id)
+				.Select(g => {
+					var first = g.First();
+					int totalQuantity = g.Sum(x => x.Quantity);
+					var merged = new ItemData(first);
+					merged.Quantity = totalQuantity;
+					return merged;
+				})
+				.ToList();
+			return grouped.AsReadOnly();
 		}
 
 		public bool HasItem(string itemId)
@@ -111,42 +122,42 @@ namespace Azulon.Services
 		}
 
 		// Shop Operations
-		public IReadOnlyList<ItemDataSO> GetShopItems()
+		public IReadOnlyList<ItemData> GetShopItems()
 		{
 			return _shopItems.AsReadOnly();
 		}
 
-		public bool CanPurchaseItem(ItemDataSO itemSO)
+		public bool CanPurchaseItem(ItemData item)
 		{
-			if (itemSO == null || itemSO.ItemData == null)
+			if (item == null || !item.IsValid())
 				return false;
 
-			return _currency >= itemSO.ItemData.Price;
+			return _currency >= item.Price;
 		}
 
-		public bool PurchaseItem(ItemDataSO itemSO, int quantity = 1)
+		public bool PurchaseItem(ItemData item, int quantity = 1)
 		{
-			if (itemSO == null || itemSO.ItemData == null || quantity <= 0)
+			if (item == null || !item.IsValid() || quantity <= 0)
 				return false;
 
-			int totalCost = itemSO.ItemData.Price * quantity;
+			int totalCost = item.Price * quantity;
 
 			if (!SpendCurrency(totalCost))
 				return false;
 
-			var purchasedItem = itemSO.CreateRuntimeItemData(quantity);
+			var purchasedItem = new ItemData(item) { Quantity = quantity };
 			AddItem(purchasedItem);
 
 			OnItemPurchased?.Invoke(purchasedItem);
 			return true;
 		}
 
-		public void SetupShop(List<ItemDataSO> shopItems)
+		public void SetupShop(List<ItemData> shopItems)
 		{
 			_shopItems.Clear();
 			if (shopItems != null)
 			{
-				_shopItems.AddRange(shopItems.Where(item => item != null));
+				_shopItems.AddRange(shopItems.Where(item => item != null && item.IsValid()));
 			}
 		}
 

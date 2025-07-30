@@ -21,7 +21,7 @@ namespace Azulon.UI
 		[SerializeField] private TextMeshProUGUI _purchaseButtonText;
 		[SerializeField] private TextMeshProUGUI _itemAmountText;
 
-		public ItemDataSO ItemDataSO { get; private set; }
+		public ItemData ItemData { get; private set; }
 
 		private ShopController _shopController;
 		private IItemService _itemService;
@@ -29,15 +29,15 @@ namespace Azulon.UI
 
 		[Inject] private UIColorSettingsSO _uiColorSettings;
 
-		public void Initialize(ItemDataSO itemDataSO, IItemService itemService, ShopController shopController)
+		public void Initialize(ItemData itemDataSO, IItemService itemService, ShopController shopController)
 		{
-			ItemDataSO = itemDataSO;
+			ItemData = itemDataSO;
 			_itemService = itemService;
 			_shopController = shopController;
 
-			if (ItemDataSO == null || ItemDataSO.ItemData == null)
+			if (ItemData == null)
 			{
-				Debug.LogError("ShopItemUI: Invalid ItemDataSO provided!");
+				Debug.LogError("ShopItemUI: Invalid ItemData provided!");
 				return;
 			}
 
@@ -48,20 +48,17 @@ namespace Azulon.UI
 
 		private void SetupUI()
 		{
-			var itemData = ItemDataSO.ItemData;
+			_itemIcon.sprite = ItemData.Icon;
+			_itemIcon.gameObject.SetActive(ItemData.Icon != null);
 
-			_itemIcon.sprite = itemData.Icon;
-			_itemIcon.gameObject.SetActive(itemData.Icon != null);
 			if (_itemIcon.rectTransform != null)
 			{
-				_itemIcon.rectTransform.sizeDelta = new Vector2(128, 128); // Beispielgröße, ggf. anpassen
+				_itemIcon.rectTransform.sizeDelta = new Vector2(128, 128);
 			}
-			_itemNameText.text = itemData.Name;
-			_itemPriceText.text = $"{itemData.Price} Gold";
-			if (_itemAmountText != null)
-			{
-				_itemAmountText.text = $"x{itemData.Quantity}";
-			}
+
+			_itemNameText.text = ItemData.Name;
+			_itemPriceText.text = $"{ItemData.Price} Gold";
+			_itemAmountText.text = $"x{ItemData.Quantity}";
 		}
 
 		private void SetupButtons()
@@ -73,12 +70,12 @@ namespace Azulon.UI
 
 		public void UpdateAffordability()
 		{
-			if (_itemService == null || ItemDataSO == null)
+			if (_itemService == null || ItemData == null)
 			{
 				return;
 			}
 
-			bool canAfford = _itemService.CanPurchaseItem(ItemDataSO);
+			bool canAfford = _itemService.CanPurchaseItem(ItemData);
 
 			// Update button interactability
 			_purchaseButton.interactable = canAfford;
@@ -98,31 +95,31 @@ namespace Azulon.UI
 
 		public void OnPointerClick(PointerEventData eventData)
 		{
-			if (_shopController == null && ItemDataSO == null)
+			if (_shopController == null && ItemData == null)
 			{
 				return;
 			}
 
-			_shopController.OnItemSelected(ItemDataSO);
+			_shopController.OnItemSelected(ItemData);
 		}
 
 		private void OnPurchaseClicked()
 		{
-			if (_itemService == null || ItemDataSO == null)
+			if (_itemService == null || ItemData == null)
 			{
 				return;
 			}
 
-			bool success = _itemService.PurchaseItem(ItemDataSO, 1);
+			bool success = _itemService.PurchaseItem(ItemData, 1);
 
 			if (success)
 			{
-				Debug.Log($"Successfully purchased: {ItemDataSO.ItemData.Name}");
+				Debug.Log($"Successfully purchased: {ItemData.Name}");
 				StartCoroutine(PurchaseFeedback());
 			}
 			else
 			{
-				Debug.Log($"Failed to purchase: {ItemDataSO.ItemData.Name}");
+				Debug.Log($"Failed to purchase: {ItemData.Name}");
 			}
 		}
 

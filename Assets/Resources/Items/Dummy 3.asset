@@ -9,14 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8a9732527355fc49840f7a36388b014, type: 3}
-  m_Name: DummyItem 1
+  m_Script: {fileID: 11500000, guid: e10acd02b14fb0d45b6651fa4097addf, type: 3}
+  m_Name: Dummy 3
   m_EditorClassIdentifier: 
   itemData:
-    id: Passion
-    itemName: Pashion led us here
-    icon: {fileID: 21300000, guid: ed22d6d04de2a31429962136f358e89c, type: 3}
-    description: Heyyy
-    price: 25
+    id: YumYum
+    itemName: YumYum
+    icon: {fileID: 21300000, guid: 2404dc64891f4f14eb96e0f1fcc67c63, type: 3}
+    description: Lorem ipsum dolor
+    price: 4
     quantity: 1
-    itemType: 3
+    itemType: 0

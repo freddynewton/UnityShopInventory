@@ -3,37 +3,35 @@ using UnityEngine.UI;
 using TMPro;
 using Azulon.Data;
 using Azulon.Services;
+using Zenject;
+using UnityEngine.EventSystems;
+using DG.Tweening;
 
 namespace Azulon.UI
 {
-	public class InventoryItemUI : MonoBehaviour
+	public class InventoryItemUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 	{
 		[Header("UI References")]
 		[SerializeField] private Image itemIcon;
 		[SerializeField] private TextMeshProUGUI itemNameText;
-		[SerializeField] private TextMeshProUGUI itemDescriptionText;
 		[SerializeField] private TextMeshProUGUI itemQuantityText;
 		[SerializeField] private TextMeshProUGUI itemTypeText;
-		[SerializeField] private Button useButton;
-		[SerializeField] private Button removeButton;
-
-		[Header("Visual Settings")]
-		[SerializeField]
-		private Color[] itemTypeColors = new Color[4]
-		{
-			Color.green,    // Consumable
-            Color.blue,     // Equipment
-            Color.yellow,   // Material
-            Color.magenta   // Valuable
-        };
+		[SerializeField] private Image backgroundImage;
 
 		private ItemData _itemData;
-		private IItemService _itemService;
+		private InventoryController _inventoryController;
+		private bool _isSelected = false;
 
-		public void Initialize(ItemData itemData, IItemService itemService)
+		[Inject] private IItemService _itemService;
+		[Inject] private UIColorSettingsSO _colorSettings;
+
+		// Colors for item types (example, can be set in inspector or code)
+		[SerializeField] private Color[] itemTypeColors;
+
+		public void Initialize(ItemData itemData, InventoryController controller = null)
 		{
 			_itemData = itemData;
-			_itemService = itemService;
+			_inventoryController = controller;
 
 			if (_itemData == null)
 			{
@@ -42,7 +40,7 @@ namespace Azulon.UI
 			}
 
 			SetupUI();
-			SetupButtons();
+			UpdateSelectionVisual();
 		}
 
 		private void SetupUI()
@@ -53,123 +51,52 @@ namespace Azulon.UI
 				itemIcon.gameObject.SetActive(_itemData.Icon != null);
 			}
 
-			if (itemNameText != null)
-				itemNameText.text = _itemData.Name;
+			itemNameText.text = _itemData.Name;
+			itemQuantityText.text = $"x{_itemData.Quantity}";
+			itemTypeText.text = _itemData.ItemType.ToString();
 
-			if (itemDescriptionText != null)
-				itemDescriptionText.text = _itemData.Description;
-
-			if (itemQuantityText != null)
-				itemQuantityText.text = $"x{_itemData.Quantity}";
-
-			if (itemTypeText != null)
+			// Set color based on item type
+			int typeIndex = (int)_itemData.ItemType;
+			if (itemTypeColors != null && typeIndex >= 0 && typeIndex < itemTypeColors.Length)
 			{
-				itemTypeText.text = _itemData.ItemType.ToString();
-
-				// Set color based on item type
-				int typeIndex = (int)_itemData.ItemType;
-				if (typeIndex >= 0 && typeIndex < itemTypeColors.Length)
-				{
-					itemTypeText.color = itemTypeColors[typeIndex];
-				}
-			}
-		}
-
-		private void SetupButtons()
-		{
-			if (useButton != null)
-			{
-				useButton.onClick.RemoveAllListeners();
-				useButton.onClick.AddListener(OnUseClicked);
-
-				// Only show use button for consumable items
-				useButton.gameObject.SetActive(_itemData.ItemType == ItemType.Consumable);
-			}
-
-			if (removeButton != null)
-			{
-				removeButton.onClick.RemoveAllListeners();
-				removeButton.onClick.AddListener(OnRemoveClicked);
-			}
-		}
-
-		private void OnUseClicked()
-		{
-			if (_itemService == null || _itemData == null)
-				return;
-
-			// For consumable items, remove one from inventory when used
-			if (_itemData.ItemType == ItemType.Consumable)
-			{
-				bool success = _itemService.RemoveItem(_itemData.Id, 1);
-
-				if (success)
-				{
-					Debug.Log($"Used: {_itemData.Name}");
-
-					// Here you could add item effect logic
-					ApplyItemEffect();
-				}
-				else
-				{
-					Debug.Log($"Failed to use: {_itemData.Name}");
-				}
-			}
-		}
-
-		private void OnRemoveClicked()
-		{
-			if (_itemService == null || _itemData == null)
-				return;
-
-			// Remove one item from inventory
-			bool success = _itemService.RemoveItem(_itemData.Id, 1);
-
-			if (success)
-			{
-				Debug.Log($"Removed: {_itemData.Name}");
+				itemTypeText.color = itemTypeColors[typeIndex];
 			}
 			else
 			{
-				Debug.Log($"Failed to remove: {_itemData.Name}");
+				itemTypeText.color = _colorSettings.primaryColor;
 			}
 		}
 
-		private void ApplyItemEffect()
+		public void OnPointerClick(PointerEventData eventData)
 		{
-			// This is where you would implement specific item effects
-			// For now, just log the effect
-			switch (_itemData.ItemType)
-			{
-				case ItemType.Consumable:
-					Debug.Log($"Applied consumable effect for {_itemData.Name}");
-					// Example: Restore health, gain experience, etc.
-					break;
-				case ItemType.Equipment:
-					Debug.Log($"Equipped {_itemData.Name}");
-					// Example: Change player stats, appearance, etc.
-					break;
-				default:
-					Debug.Log($"No specific effect for {_itemData.ItemType} items");
-					break;
-			}
+			SetSelected(true);
+			_inventoryController?.ShowItemPreview(_itemData);
 		}
 
-		public void UpdateDisplay()
+		public void OnPointerEnter(PointerEventData eventData)
 		{
-			if (_itemData != null)
-			{
-				SetupUI();
-			}
+			transform.DOKill();
+			transform.DOScale(1.1f, 0.25f).SetEase(Ease.OutBack);
+
+			backgroundImage.color = _colorSettings.accentColor;
 		}
 
-		private void OnDestroy()
+		public void OnPointerExit(PointerEventData eventData)
 		{
-			if (useButton != null)
-				useButton.onClick.RemoveAllListeners();
+			transform.DOKill();
+			transform.DOScale(1.0f, 0.2f).SetEase(Ease.OutBack);
+			UpdateSelectionVisual();
+		}
 
-			if (removeButton != null)
-				removeButton.onClick.RemoveAllListeners();
+		public void SetSelected(bool selected)
+		{
+			_isSelected = selected;
+			UpdateSelectionVisual();
+		}
+
+		private void UpdateSelectionVisual()
+		{
+			backgroundImage.color = _isSelected ? _colorSettings.accentColor : _colorSettings.primaryColor;
 		}
 	}
 }

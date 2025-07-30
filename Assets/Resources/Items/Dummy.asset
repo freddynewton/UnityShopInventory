@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8a9732527355fc49840f7a36388b014, type: 3}
-  m_Name: DummyItem
+  m_Script: {fileID: 11500000, guid: e10acd02b14fb0d45b6651fa4097addf, type: 3}
+  m_Name: Dummy
   m_EditorClassIdentifier: 
   itemData:
     id: Car
@@ -24,6 +24,6 @@ MonoBehaviour:
       tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
       At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
       no sea takimata sanctus est Lorem ipsum dolor sit amet.
-    price: 9999
-    quantity: 10
-    itemType: 0
+    price: 500
+    quantity: 1
+    itemType: 3

@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 using Zenject;
 using Azulon.Data;
 using Azulon.Services;
@@ -11,42 +9,46 @@ namespace Azulon.UI
 	public class InventoryController : MonoBehaviour
 	{
 		[Header("UI References")]
-		[SerializeField] private GameObject inventoryPanel;
-		[SerializeField] private Transform inventoryItemsContainer;
-		[SerializeField] private GameObject inventoryItemPrefab;
-		[SerializeField] private Button closeInventoryButton;
-		[SerializeField] private TextMeshProUGUI inventoryTitleText;
+		[SerializeField] private GameObject _inventoryPanel;
+		[SerializeField] private Transform _inventoryItemsContainer;
+		[SerializeField] private GameObject _inventoryItemPrefab;
+		[SerializeField] private ItemPreviewUI _itemPreviewUI;
 
 		[Inject] private IItemService _itemService;
+		[Inject] private DiContainer _diContainer;
 
 		private readonly List<InventoryItemUI> _inventoryItemUIs = new List<InventoryItemUI>();
+		private string _activeCategoryFilter = null;
 
 		// Public Methods
 		public void OpenInventory()
 		{
-			if (inventoryPanel != null)
-			{
-				inventoryPanel.SetActive(true);
-				RefreshInventoryDisplay();
-			}
+			_inventoryPanel.SetActive(true);
+			RefreshInventoryDisplay();
 		}
 
 		public void CloseInventory()
 		{
-			if (inventoryPanel != null)
-				inventoryPanel.SetActive(false);
+			_inventoryPanel.SetActive(false);
 		}
 
 		public void ToggleInventory()
 		{
-			if (inventoryPanel != null)
+			bool isActive = _inventoryPanel.activeSelf;
+			if (isActive)
 			{
-				bool isActive = inventoryPanel.activeSelf;
-				if (isActive)
-					CloseInventory();
-				else
-					OpenInventory();
+				CloseInventory();
 			}
+			else
+			{
+				OpenInventory();
+			}
+		}
+
+		public void FilterByCategory(string category)
+		{
+			_activeCategoryFilter = category;
+			RefreshInventoryDisplay();
 		}
 
 		// Private Methods
@@ -66,9 +68,6 @@ namespace Azulon.UI
 			_itemService.OnInventoryChanged += RefreshInventoryDisplay;
 			_itemService.OnItemAdded += OnItemChanged;
 			_itemService.OnItemRemoved += OnItemChanged;
-
-			if (closeInventoryButton != null)
-				closeInventoryButton.onClick.AddListener(CloseInventory);
 		}
 
 		private void RemoveEventListeners()
@@ -79,9 +78,6 @@ namespace Azulon.UI
 				_itemService.OnItemAdded -= OnItemChanged;
 				_itemService.OnItemRemoved -= OnItemChanged;
 			}
-
-			if (closeInventoryButton != null)
-				closeInventoryButton.onClick.RemoveListener(CloseInventory);
 		}
 
 		private void OnItemChanged(ItemData item)
@@ -101,16 +97,36 @@ namespace Azulon.UI
 			foreach (var itemUI in _inventoryItemUIs)
 			{
 				if (itemUI != null)
+				{
 					Destroy(itemUI.gameObject);
+				}
 			}
+
 			_inventoryItemUIs.Clear();
 		}
 
 		private void CreateInventoryItemUIs()
 		{
 			var inventoryItems = _itemService.GetInventoryItems();
+			var filteredItems = new List<ItemData>();
 
-			foreach (var itemData in inventoryItems)
+			// Apply filtering
+			if (string.IsNullOrEmpty(_activeCategoryFilter) || _activeCategoryFilter == "All")
+			{
+				filteredItems = new List<ItemData>(inventoryItems);
+			}
+			else
+			{
+				foreach (var item in inventoryItems)
+				{
+					if (item.ItemType.ToString() == _activeCategoryFilter)
+					{
+						filteredItems.Add(item);
+					}
+				}
+			}
+
+			foreach (var itemData in filteredItems)
 			{
 				CreateInventoryItemUI(itemData);
 			}
@@ -118,34 +134,71 @@ namespace Azulon.UI
 
 		private void CreateInventoryItemUI(ItemData itemData)
 		{
-			if (inventoryItemPrefab == null || inventoryItemsContainer == null || itemData == null)
+			if (_inventoryItemPrefab == null || _inventoryItemsContainer == null || itemData == null)
+			{
 				return;
+			}
 
-			GameObject itemUIObj = Instantiate(inventoryItemPrefab, inventoryItemsContainer);
-			InventoryItemUI itemUI = itemUIObj.GetComponent<InventoryItemUI>();
+			InventoryItemUI itemUI = _diContainer.InstantiatePrefabForComponent<InventoryItemUI>(_inventoryItemPrefab, _inventoryItemsContainer);
 
 			if (itemUI != null)
 			{
-				itemUI.Initialize(itemData, _itemService);
+				itemUI.Initialize(itemData, this);
 				_inventoryItemUIs.Add(itemUI);
+			}
+		}
+
+		public void ShowItemPreview(ItemData itemData)
+		{
+			if (_itemPreviewUI == null || itemData == null)
+			{
+				return;
+			}
+
+			_itemPreviewUI.ShowPreview(itemData);
+			_itemPreviewUI.Setup(_itemService, OnPreviewPurchase, OnPreviewSell);
+		}
+
+		private void OnPreviewPurchase(ItemData data)
+		{
+			if (data == null)
+			{
+				return;
+			}
+
+			if (_itemService.SpendCurrency(data.Price))
+			{
+				_itemService.AddItem(data);
+				RefreshInventoryDisplay();
+			}
+			else
+			{
+				Debug.LogWarning($"Not enough currency to purchase {data.Name}");
+			}
+		}
+
+		private void OnPreviewSell(ItemData itemData)
+		{
+			if (itemData == null)
+			{
+				return;
+			}
+
+			if (_itemService.RemoveItem(itemData.Id, 1))
+			{
+				_itemService.AddCurrency(itemData.Price);
+				RefreshInventoryDisplay();
+
+				if (_itemService.GetItemQuantity(itemData.Id) <= 0)
+				{
+					_itemPreviewUI.HidePreview();
+				}
 			}
 		}
 
 		private void UpdateInventoryTitle()
 		{
-			if (inventoryTitleText != null)
-			{
-				int totalItems = _itemService.GetInventoryItems().Count;
-				inventoryTitleText.text = $"Inventory ({totalItems} items)";
-			}
-		}
-
-		// Editor helper
-		[ContextMenu("Refresh Inventory Display")]
-		private void RefreshInventoryDisplayEditor()
-		{
-			if (Application.isPlaying)
-				RefreshInventoryDisplay();
+			int totalItems = _itemService.GetInventoryItems().Count;
 		}
 	}
 }

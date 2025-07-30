@@ -18,7 +18,7 @@ namespace Azulon.UI
 
 		[Inject] private IItemService _itemService;
 
-		private UIState _currentState = UIState.Shop;
+		private UIState _currentState = UIState.None;
 
 		// Public Properties
 		public bool IsShopOpen => _currentState == UIState.Shop;
