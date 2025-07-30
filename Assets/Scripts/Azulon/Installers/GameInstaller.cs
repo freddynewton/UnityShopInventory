@@ -10,7 +10,7 @@ namespace Azulon.Installers
 	{
 		[SerializeField] private UIColorSettingsSO UIColorSettings;
 
-        public override void InstallBindings()
+		public override void InstallBindings()
 		{
 			// Bind ItemService as singleton
 			Container.Bind<IItemService>()
@@ -19,12 +19,12 @@ namespace Azulon.Installers
 					 .NonLazy();
 
 			Container.Bind<UIColorSettingsSO>()
-                     .FromInstance(UIColorSettings)
-                     .AsSingle()
-                     .NonLazy();
+					 .FromInstance(UIColorSettings)
+					 .AsSingle()
+					 .NonLazy();
 
-            // Initialize the ItemService with saved data
-            Container.Resolve<IItemService>().LoadData();
+			// Initialize the ItemService with saved data
+			Container.Resolve<IItemService>().LoadData();
 		}
 	}
 }

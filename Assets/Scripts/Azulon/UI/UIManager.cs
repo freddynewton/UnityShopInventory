@@ -16,10 +16,6 @@ namespace Azulon.UI
 		[SerializeField] private Button shopButton;
 		[SerializeField] private Button inventoryButton;
 
-		[Header("Visual Feedback")]
-		[SerializeField] private Color selectedButtonColor = Color.yellow;
-		[SerializeField] private Color normalButtonColor = Color.white;
-
 		[Inject] private IItemService _itemService;
 
 		private UIState _currentState = UIState.Shop;
@@ -38,19 +34,8 @@ namespace Azulon.UI
 
 			_currentState = UIState.Shop;
 
-			// Close inventory first
-			if (inventoryController != null)
-			{
-				inventoryController.CloseInventory();
-			}
-
-			// Open shop
-			if (shopController != null)
-			{
-				shopController.OpenShop();
-			}
-
-			UpdateButtonVisuals();
+			inventoryController.CloseInventory();
+			shopController.OpenShop();
 			Debug.Log("UIManager: Opened Shop");
 		}
 
@@ -65,7 +50,6 @@ namespace Azulon.UI
 			shopController?.CloseShop();
 			inventoryController?.OpenInventory();
 
-			UpdateButtonVisuals();
 			Debug.Log("UIManager: Opened Inventory");
 		}
 
@@ -97,29 +81,6 @@ namespace Azulon.UI
 		{
 			// Start with Shop open
 			OpenShop();
-		}
-
-		private void UpdateButtonVisuals()
-		{
-			// Update shop button
-			if (shopButton != null)
-			{
-				var shopButtonImage = shopButton.GetComponent<Image>();
-				if (shopButtonImage != null)
-				{
-					shopButtonImage.color = _currentState == UIState.Shop ? selectedButtonColor : normalButtonColor;
-				}
-			}
-
-			// Update inventory button
-			if (inventoryButton != null)
-			{
-				var inventoryButtonImage = inventoryButton.GetComponent<Image>();
-				if (inventoryButtonImage != null)
-				{
-					inventoryButtonImage.color = _currentState == UIState.Inventory ? selectedButtonColor : normalButtonColor;
-				}
-			}
 		}
 
 		private void OnApplicationPause(bool pauseStatus)

@@ -9,133 +9,133 @@ using Zenject;
 
 namespace Azulon.UI
 {
-    public class ShopItemUI : MonoBehaviour, IPointerClickHandler
-    {
-        [Header("UI References")]
-        [SerializeField] private Image _itemIcon;
-        [SerializeField] private Image _backgroundImage;
-        [SerializeField] private TextMeshProUGUI _itemNameText;
-        [SerializeField] private TextMeshProUGUI _itemPriceText;
-        [SerializeField] private Button _purchaseButton;
-        [SerializeField] private TextMeshProUGUI _purchaseButtonText;
+	public class ShopItemUI : MonoBehaviour, IPointerClickHandler
+	{
+		[Header("UI References")]
+		[SerializeField] private Image _itemIcon;
+		[SerializeField] private Image _backgroundImage;
+		[SerializeField] private TextMeshProUGUI _itemNameText;
+		[SerializeField] private TextMeshProUGUI _itemPriceText;
+		[SerializeField] private Button _purchaseButton;
+		[SerializeField] private TextMeshProUGUI _purchaseButtonText;
 
-        public ItemDataSO ItemDataSO { get; private set; }
+		public ItemDataSO ItemDataSO { get; private set; }
 
-        private ShopController _shopController;
-        private IItemService _itemService;
-        private bool _isSelected = false;
+		private ShopController _shopController;
+		private IItemService _itemService;
+		private bool _isSelected = false;
 
-        [Inject] private UIColorSettingsSO _uiColorSettings;
+		[Inject] private UIColorSettingsSO _uiColorSettings;
 
-        public void Initialize(ItemDataSO itemDataSO, IItemService itemService, ShopController shopController)
-        {
-            ItemDataSO = itemDataSO;
-            _itemService = itemService;
-            _shopController = shopController;
+		public void Initialize(ItemDataSO itemDataSO, IItemService itemService, ShopController shopController)
+		{
+			ItemDataSO = itemDataSO;
+			_itemService = itemService;
+			_shopController = shopController;
 
-            if (ItemDataSO == null || ItemDataSO.ItemData == null)
-            {
-                Debug.LogError("ShopItemUI: Invalid ItemDataSO provided!");
-                return;
-            }
+			if (ItemDataSO == null || ItemDataSO.ItemData == null)
+			{
+				Debug.LogError("ShopItemUI: Invalid ItemDataSO provided!");
+				return;
+			}
 
-            SetupUI();
-            SetupButtons();
-            UpdateAffordability();
-        }
+			SetupUI();
+			SetupButtons();
+			UpdateAffordability();
+		}
 
-        private void SetupUI()
-        {
-            var itemData = ItemDataSO.ItemData;
+		private void SetupUI()
+		{
+			var itemData = ItemDataSO.ItemData;
 
-            _itemIcon.sprite = itemData.Icon;
-            _itemIcon.gameObject.SetActive(itemData.Icon != null);
-            _itemNameText.text = itemData.Name;
-            _itemPriceText.text = $"{itemData.Price} Gold";
-        }
+			_itemIcon.sprite = itemData.Icon;
+			_itemIcon.gameObject.SetActive(itemData.Icon != null);
+			_itemNameText.text = itemData.Name;
+			_itemPriceText.text = $"{itemData.Price} Gold";
+		}
 
-        private void SetupButtons()
-        {
-            _purchaseButton.onClick.RemoveAllListeners();
-            _purchaseButton.onClick.AddListener(OnPurchaseClicked);
-            _purchaseButtonText.text = "Buy";
-        }
+		private void SetupButtons()
+		{
+			_purchaseButton.onClick.RemoveAllListeners();
+			_purchaseButton.onClick.AddListener(OnPurchaseClicked);
+			_purchaseButtonText.text = "Buy";
+		}
 
-        public void UpdateAffordability()
-        {
-            if (_itemService == null || ItemDataSO == null)
-            {
-                return;
-            }
+		public void UpdateAffordability()
+		{
+			if (_itemService == null || ItemDataSO == null)
+			{
+				return;
+			}
 
-            bool canAfford = _itemService.CanPurchaseItem(ItemDataSO);
+			bool canAfford = _itemService.CanPurchaseItem(ItemDataSO);
 
-            // Update button interactability
-            _purchaseButton.interactable = canAfford;
+			// Update button interactability
+			_purchaseButton.interactable = canAfford;
 
-            // Update visual appearance based on selection and affordability
-            Color targetColor = _isSelected ? _uiColorSettings.primaryColor : (canAfford ? _uiColorSettings.accentColor: _uiColorSettings.disabledColor);
-            _purchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
+			// Update visual appearance based on selection and affordability
+			Color targetColor = _isSelected ? _uiColorSettings.accentColor : (canAfford ? _uiColorSettings.primaryColor : _uiColorSettings.disabledColor);
+			_purchaseButtonText.text = canAfford ? "Buy" : "Can't Afford";
 
-            _backgroundImage.color = targetColor;
-        }
+			_backgroundImage.color = targetColor;
+		}
 
-        public void SetSelected(bool selected)
-        {
-            _isSelected = selected;
-            UpdateAffordability(); // This will update colors based on selection state
-        }
+		public void SetSelected(bool selected)
+		{
+			_isSelected = selected;
+			UpdateAffordability(); // This will update colors based on selection state
+		}
 
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (_shopController == null && ItemDataSO == null)
-            {
-                return;
-            }
+		public void OnPointerClick(PointerEventData eventData)
+		{
+			if (_shopController == null && ItemDataSO == null)
+			{
+				return;
+			}
 
-            _shopController.OnItemSelected(ItemDataSO);
-        }
+			_shopController.OnItemSelected(ItemDataSO);
+		}
 
-        private void OnPurchaseClicked()
-        {
-            if (_itemService == null || ItemDataSO == null)
-            {
-                return;
-            }
+		private void OnPurchaseClicked()
+		{
+			if (_itemService == null || ItemDataSO == null)
+			{
+				return;
+			}
 
-            bool success = _itemService.PurchaseItem(ItemDataSO, 1);
+			bool success = _itemService.PurchaseItem(ItemDataSO, 1);
 
-            if (success)
-            {
-                Debug.Log($"Successfully purchased: {ItemDataSO.ItemData.Name}");
-                StartCoroutine(PurchaseFeedback());
-            }
-            else
-            {
-                Debug.Log($"Failed to purchase: {ItemDataSO.ItemData.Name}");
-            }
-        }
+			if (success)
+			{
+				Debug.Log($"Successfully purchased: {ItemDataSO.ItemData.Name}");
+				StartCoroutine(PurchaseFeedback());
+			}
+			else
+			{
+				Debug.Log($"Failed to purchase: {ItemDataSO.ItemData.Name}");
+			}
+		}
 
-        private IEnumerator PurchaseFeedback()
-        {
-            if (_purchaseButtonText != null)
-            {
-                string originalText = _purchaseButtonText.text;
-                _purchaseButtonText.text = "Purchased!";
+		private IEnumerator PurchaseFeedback()
+		{
+			if (_purchaseButtonText != null)
+			{
+				string originalText = _purchaseButtonText.text;
+				_purchaseButtonText.text = "Purchased!";
 
-                yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(0.5f);
 
-                _purchaseButtonText.text = originalText;
-                UpdateAffordability();
-            }
-        }
+				_purchaseButtonText.text = originalText;
+				UpdateAffordability();
+			}
+		}
 
-        private void OnDestroy()
-        {
-            if (_purchaseButton != null)
-            {
-                _purchaseButton.onClick.RemoveAllListeners();
-            }
-        }
-    }
+		private void OnDestroy()
+		{
+			if (_purchaseButton != null)
+			{
+				_purchaseButton.onClick.RemoveAllListeners();
+			}
+		}
+	}
 }
